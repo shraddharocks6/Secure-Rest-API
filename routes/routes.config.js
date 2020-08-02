@@ -20,7 +20,7 @@ router.post("/api/post", verifyToken, (req, res) => {
   });
 });
 
-router.post("/api/login/:email/:password", (req, res) => {
+router.post("/api/login/", (req, res) => {
   const user = {
     id: 1,
     username: "sam",
