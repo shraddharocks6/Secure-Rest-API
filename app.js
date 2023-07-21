@@ -1,28 +1,51 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
-
-//ROUTE IMPORT
-const Routes = require("./routes/routes.config.js");
+const jwt = require("jsonwebtoken");
+const KaalkaNTP = require("./KaalkaNTP");
 
 const app = express();
-//DATABASE CONNECTION
-mongoose.connect(
-  "mongodb+srv://webapp:wegottawin@cluster0.4gzmr.mongodb.net/SECURE-REST-API?retryWrites=true&w=majority",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+const kaalkaNTP = new KaalkaNTP();
+
+// Middleware to verify JWT token
+function verifyToken(req, res, next) {
+  const bearerHeader = req.headers["authorization"];
+
+  if (typeof bearerHeader !== "undefined") {
+    const bearer = bearerHeader.split(" ");
+    const bearerToken = bearer[1];
+    req.token = bearerToken;
+    next();
+  } else {
+    res.sendStatus(403);
   }
-);
-var db = mongoose.connection;
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", function () {
-  console.log("We are connected to cloud");
+}
+
+// Encrypt endpoint
+app.post("/encrypt", verifyToken, (req, res) => {
+  jwt.verify(req.token, "secretKey", (err) => {
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      const data = req.body.data;
+      const encryptedData = kaalka.encrypt(data);
+      res.json({ encryptedData });
+    }
+  });
 });
 
-//ROUTE MIDDLEWARES
-app.use(Routes);
+// Decrypt endpoint
+app.post("/decrypt", verifyToken, (req, res) => {
+  jwt.verify(req.token, "secretKey", (err) => {
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      const encryptedData = req.body.encryptedData;
+      const decryptedData = kaalka.decrypt(encryptedData);
+      res.json({ decryptedData });
+    }
+  });
+});
 
-//LISTENING
-// app.listen(process.env.PORT, process.env.IP);
-app.listen(3000, () => console.log("Server is on!!"));
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
